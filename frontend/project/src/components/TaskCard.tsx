@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, CreditCard as Edit3, Trash2, MoreVertical } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+import { Calendar, Edit3, Trash2, MoreVertical } from 'lucide-react';
 import { Task } from '../types/Task';
 import { CATEGORIES, PRIORITIES, formatDate, isOverdue, isDueSoon } from '../utils/constants';
+import * as LucideIcons from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -17,15 +18,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onEdit, onD
   const category = CATEGORIES.find(cat => cat.value === task.category);
   const priority = PRIORITIES.find(pri => pri.value === task.priority);
   
-  const Icon = ({ iconName }: { iconName: string }) => {
-    const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons];
-    return <IconComponent className="h-4 w-4" />;
-  };
+const Icon = ({ iconName }: { iconName: string }) => {
+  // Use type assertion to tell TS this is a React component
+  const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as LucideIcon | undefined;
+
+  if (!IconComponent) {
+    console.warn(`Icon "${iconName}" not found in lucide-react`);
+    return null; // don’t crash
+  }
+
+  return <IconComponent className="h-4 w-4" />;
+};
+
 
   const getDueDateStatus = () => {
-    if (!task.dueDate) return null;
-    if (isOverdue(task.dueDate) && !task.completed) return 'overdue';
-    if (isDueSoon(task.dueDate) && !task.completed) return 'due-soon';
+    if (!task.due_Date) return null;
+    if (isOverdue(task.due_Date) && !task.completed) return 'overdue';
+    if (isDueSoon(task.due_Date) && !task.completed) return 'due-soon';
     return 'normal';
   };
 
@@ -41,7 +50,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onEdit, onD
         <div className="flex items-start space-x-3 flex-1">
           {/* Checkbox */}
           <button
-            onClick={() => onToggleComplete(task.id)}
+            onClick={() => onToggleComplete(task._id)}
             className={`
               mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center
               transition-all duration-200 hover:scale-110 ${
@@ -66,12 +75,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onEdit, onD
               {task.title}
             </h3>
             
-            {task.description && (
+            {task.desc && (
               <p className={`
                 text-sm text-gray-400 mb-3 ${
                 task.completed ? 'line-through' : ''
               }`}>
-                {task.description}
+                {task.desc}
               </p>
             )}
             
@@ -98,7 +107,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onEdit, onD
               )}
               
               {/* Due Date */}
-              {task.dueDate && (
+              {task.due_Date && (
                 <div className={`
                   flex items-center space-x-1 text-xs px-2 py-1 rounded-full
                   ${dueDateStatus === 'overdue' ? 'text-red-300 bg-red-900' :
@@ -137,7 +146,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onEdit, onD
               </button>
               <button
                 onClick={() => {
-                  onDelete(task.id);
+                  onDelete(task._id);
                   setShowActions(false);
                 }}
                 className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-600 hover:text-red-400 flex items-center space-x-2"

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Flag, Tag, FileText } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+
 import { Task, TaskFormData } from '../types/Task';
 import { CATEGORIES, PRIORITIES } from '../utils/constants';
+import axios from 'axios';
 
 interface TaskFormProps {
   isOpen: boolean;
@@ -14,48 +15,67 @@ interface TaskFormProps {
 const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSave, editingTask }) => {
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
-    description: '',
-    category: 'personal',
+    desc: '',
     priority: 'medium',
-    dueDate: ''
+    due_Date: '',
+    category: 'personal'
   });
 
   useEffect(() => {
     if (editingTask) {
       setFormData({
         title: editingTask.title,
-        description: editingTask.description || '',
-        category: editingTask.category,
+        desc: editingTask.desc || '',
         priority: editingTask.priority,
-        dueDate: editingTask.dueDate || ''
+        due_Date: editingTask.due_Date || '',
+        category: editingTask.category
       });
     } else {
       setFormData({
         title: '',
-        description: '',
-        category: 'personal',
+        desc: '',
         priority: 'medium',
-        dueDate: ''
+        due_Date: '',
+        category: 'personal'
       });
     }
   }, [editingTask, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(!editingTask){
+    console.log('Submitting form with data:', formData);
     if (formData.title.trim()) {
-      onSave(formData);
+      await axios.post('http://localhost:5000/api/todos', formData)
+        .then(response => {
+          onSave(response.data);
+          console.log('Task saved:', response.data);
+          
+        })
+        .catch(error => {
+          console.error('Error saving task:', error);
+        });
       onClose();
-    }
+    }}
+    else{
+      await axios.put(`http://localhost:5000/api/todos/${editingTask._id}`, formData)
+        .then(response => {
+          onSave(response.data);
+          console.log('Task updated:', response.data);
+        })
+        .catch(error => {
+          console.error('Error updating task:', error);
+        });
+      onClose();
+    } 
   };
 
   const handleChange = (field: keyof TaskFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const Icon = ({ iconName }: { iconName: string }) => {
-    const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons];
-    return <IconComponent className="h-4 w-4" />;
-  };
+
+
 
   if (!isOpen) return null;
 
@@ -95,20 +115,20 @@ const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSave, editingTas
             />
           </div>
 
-          {/* Description */}
+          {/* desc */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
+              desc
             </label>
             <textarea
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Add a description..."
+              value={formData.desc}
+              onChange={(e) => handleChange('desc', e.target.value)}
+              placeholder="Add a desc..."
               rows={3}
               className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 
                          text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 
                          focus:ring-1 focus:ring-blue-400 transition-all duration-200 resize-none"
-            />
+           required />
           </div>
 
           {/* Category */}
@@ -177,8 +197,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ isOpen, onClose, onSave, editingTas
             </label>
             <input
               type="date"
-              value={formData.dueDate}
-              onChange={(e) => handleChange('dueDate', e.target.value)}
+              value={formData.due_Date}
+              onChange={(e) => handleChange('due_Date', e.target.value)}
               className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 
                          text-white focus:outline-none focus:border-blue-400 
                          focus:ring-1 focus:ring-blue-400 transition-all duration-200"

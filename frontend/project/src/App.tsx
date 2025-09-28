@@ -1,56 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Task, TaskFormData, TaskCategory, TaskPriority } from './types/Task';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
+import axios from 'axios';
+
+const gettasks = async () => {
+  try {
+    const response = await axios.get('http://localhost:5000/api/todos');
+    console.log('Fetched tasks:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    return [];
+  }
+};  
 
 const App: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Complete project proposal',
-      description: 'Finalize the Q1 project proposal and send to stakeholders',
-      category: 'work',
-      priority: 'high',
-      dueDate: '2025-01-25',
-      completed: false,
-      createdAt: '2025-01-15T10:00:00Z',
-      updatedAt: '2025-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Grocery shopping',
-      description: 'Buy vegetables, fruits, and dairy products',
-      category: 'shopping',
-      priority: 'medium',
-      dueDate: '2025-01-20',
-      completed: true,
-      createdAt: '2025-01-14T09:30:00Z',
-      updatedAt: '2025-01-19T14:20:00Z'
-    },
-    {
-      id: '3',
-      title: 'Schedule dental appointment',
-      category: 'health',
-      priority: 'low',
-      dueDate: '2025-01-30',
-      completed: false,
-      createdAt: '2025-01-13T16:45:00Z',
-      updatedAt: '2025-01-13T16:45:00Z'
-    },
-    {
-      id: '4',
-      title: 'Review monthly budget',
-      description: 'Analyze expenses and adjust budget for next month',
-      category: 'finance',
-      priority: 'urgent',
-      dueDate: '2025-01-18',
-      completed: false,
-      createdAt: '2025-01-12T11:15:00Z',
-      updatedAt: '2025-01-12T11:15:00Z'
-    }
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory | 'all'>('all');
   const [selectedPriority, setSelectedPriority] = useState<TaskPriority | 'all'>('all');
@@ -59,6 +27,14 @@ const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
 
+  // ✅ fetch tasks when component mounts
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const data = await gettasks();
+      setTasks(data.reverse());
+    };
+    fetchTasks();
+  }, []);
   // Filter tasks based on selected category and priority
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -92,7 +68,8 @@ const App: React.FC = () => {
     setShowTaskForm(true);
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask =(task: Task) => {
+
     setEditingTask(task);
     setShowTaskForm(true);
   };
@@ -102,7 +79,7 @@ const App: React.FC = () => {
     
     if (editingTask) {
       setTasks(prev => prev.map(task => 
-        task.id === editingTask.id 
+        task._id === editingTask._id 
           ? {
               ...task,
               ...formData,
@@ -125,9 +102,17 @@ const App: React.FC = () => {
     setEditingTask(null);
   };
 
-  const handleToggleComplete = (id: string) => {
+  const handleToggleComplete = async(id: string) => {
+    await axios.patch(`http://localhost:5000/api/todos/${id}/toggle`)
+      .then(() => {
+        console.log('Task toggled:', id);
+      } )
+      .catch(error => {
+        console.error('Error toggling task:', error);
+      });
+
     setTasks(prev => prev.map(task => 
-      task.id === id 
+      task._id === id 
         ? { 
             ...task, 
             completed: !task.completed,
@@ -137,8 +122,16 @@ const App: React.FC = () => {
     ));
   };
 
-  const handleDeleteTask = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
+  const handleDeleteTask =  async (id: string) => {
+
+        await axios.delete(`http://localhost:5000/api/todos/${id}`)
+      .then(() => {
+        setTasks(prev => prev.filter(task => task._id !== id));
+        console.log('Task deleted:', id);
+      })
+      .catch(error => {
+        console.error('Error deleting task:', error);
+      });
   };
 
   const handleCategoryChange = (category: TaskCategory | 'all') => {

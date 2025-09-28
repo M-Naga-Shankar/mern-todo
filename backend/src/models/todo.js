@@ -10,16 +10,19 @@ const todoSchema = mongoose.Schema({
 
     },
     priority:{
-        type:Number,
-        require:true,
-    },
-    catagory:{
         type:String,
         require:true,
     },
-    status:{
-        type:Boolean,
+    category:{
+        type:String,
         require:true,
+    },
+    due_Date:{
+        type:String,
+        require:true,
+    },
+    completed:{
+        type:Boolean,
         default:false,  
     },  
     },{timestamps:true}

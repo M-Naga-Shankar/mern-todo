@@ -57,3 +57,20 @@ export const deleteTodoById = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };  
+
+export const toggleTodoStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const todo = await Todo.findById(id);
+        if (!todo) {
+            return res.status(404).json({ message: `Cannot find any todo with ID ${id}` });
+        }
+        todo.completed = !todo.completed;
+        await todo.save();
+        res.status(200).json(todo);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Additional functions can be added here as needed
