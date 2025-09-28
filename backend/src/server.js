@@ -1,37 +1,25 @@
 import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
+import routes from "./routes/todoRoutes.js";
+import { connectdb } from "./config/dbconfig.js";
 import dotenv from "dotenv";
-//import todoRoutes from "./routes/todoRoutes.js";
+import cors from "cors";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const conn = process.env.mongo_url;
+const app=express();
 
-// Middleware
 app.use(cors());
+
+
 app.use(express.json());
 
-// Routes
-//app.use("/api/todos", todoRoutes);
+connectdb(conn);
 
-// MongoDB Connection
-// mongoose
-//   .connect(process.env.MONGODB_URI, {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true,
-//   })
-//   .then(() => {
-//     console.log("Connected to MongoDB");
-//     app.listen(PORT, () => {
-//       console.log(`Server is running on http://localhost:${PORT}`);
-//     });
-//   })
-//   .catch((error) => {
-//     console.error("MongoDB connection error:", error);
-//   });        
+app.use('/api/todos',routes);
+app.use('/api/users',userRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+app.listen(5000,()=>{
+    console.log("server started")
+})
